@@ -48,6 +48,7 @@ features = ["expose-arith"]
 [build-dependencies]
 bindgen = "0.46"
 cbindgen = "0.6.8"
+pkg-config = "0.3"
 
 [features]
 default = []

@@ -1,5 +1,6 @@
 extern crate bindgen;
 extern crate cbindgen;
+extern crate pkg_config;
 
 use std::env;
 use std::fs::File;
@@ -82,4 +83,23 @@ Libs: {libs}
         libs = libs
     )
     .expect("unable to write to .pc file: {:?}");
+
+    find_library("libprofiler", "profiler");
+    find_library("libtcmalloc", "tcmalloc");
+    // FIXME: Can't do it based on the `profile` feature (`#[cfg(feature = "profile")]`)
+    // passed to the `zigzag` example as that feature seems to be processed later in the
+    // build process and is not passed to `filecoin_proofs`.
+}
+
+/// Configures the crate to link against `lib_name`.
+///
+/// The library is first searched via the pkg-config file provided in
+/// `pc_name`, which provides us accurate information on how to find the
+/// library to link to. But because old gperftools did not supply such
+/// files, this falls back to using the linker's path.
+fn find_library(pc_name: &str, lib_name: &str) {
+    match pkg_config::Config::new().atleast_version("2.0").probe(pc_name) {
+        Ok(_) => (),
+        Err(_) => println!("cargo:rustc-link-lib={}", lib_name),
+    };
 }
